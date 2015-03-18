@@ -1,0 +1,45 @@
+html {
+	height: 100%;
+}
+body {
+	font-family: "Open Sans";
+	font-weight: 300;
+	margin: 0;
+	padding: 0;
+	text-align: center;
+	height: 100%;
+	width: 100%;
+}
+#container {
+	width:450px;
+	height: 450px;
+	margin:auto;
+}
+
+table {
+	/* set size of font in table! */
+	font-size: 30px;
+	width: inherit;
+	height: inherit;
+}
+
+/* defining a single cell */
+td {
+	/* set bg color and brightness of cell */
+	background-color: #428bca;
+	opacity: 0.5;
+
+	/* font color */
+	color:#fff;
+
+
+	/* center X's and O's in cell */
+	vertical-align: center;
+	text-align: center;
+}
+
+/* change cell when mouse hovers over it */
+td:hover {
+	/*opacity: 0.6;  make cell darker */
+	cursor: pointer; /* mouse changes to pointer */
+}
