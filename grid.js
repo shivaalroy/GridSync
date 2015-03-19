@@ -14,6 +14,10 @@ var grid1;
 function makeGrid() {
 	var size = getParameterByName('size');
 	if (size == "") return;
+	if (size > 10) {
+		alert("Size too large, please choose a smaller size");
+		return;
+	}
 	var dimension = 100 / size;
 	var table = "<table id='grid'>";
 	var table_row = "<tr>";
@@ -27,35 +31,36 @@ function makeGrid() {
 	}
 	table += "</table>";
 	document.getElementById("container").innerHTML = table;
-	grid1 = new Grid("grid");
+	grid1 = new Grid("grid", size);
 }
 
-function Grid(name) {
-	this.table = document.getElementById(name);
+function Grid(name, size) {
+	this.size = size;
 	this.name = name;
-	var cells = document.getElementsByTagName("td");
+	this.status = "";
+	this.table = document.getElementById(name);
+	this.cells = document.getElementsByTagName("td");
+	var cells = this.cells;
 	var grid = this;
 	for (var i = 0; i < cells.length; i++) {
 		cells[i].id = "cell_"+i;
-		cells[i].addEventListener("click", function() { grid.toggleX(this);});
-		cells[i].addEventListener("dragover", function() { grid.allowDrop(event);});
-		cells[i].addEventListener("drop", function() { grid.drop(event);});
-		cells[i].addEventListener("dragstart", function() { grid.drag(event);});
-
+		cells[i].addEventListener("click", function() { grid.toggleX(this); });
+		cells[i].addEventListener("dragover", function() { grid.allowDrop(event); });
+		cells[i].addEventListener("drop", function() { grid.drop(event); });
+		cells[i].addEventListener("dragstart", function() { grid.drag(event); });
 	}
-	console.log(this.table);
 	this.startCell;
 	this.endCell;
 	this.refreshGrid();
-	// this.start();
+	window.addEventListener("load", function() { grid.changeCount(1); });
 }
 
 Grid.prototype.toggleX = function(cell) {
-	if (cell.innerHTML == "") {
-		cell.innerHTML = "X";
-	} else {
+	if (cell.innerHTML == "")
+		cell.innerHTML = "x";
+	else
 		cell.innerHTML = "";
-	}
+	this.updateGridStatus();
 };
 
 Grid.prototype.allowDrop = function(ev) {
@@ -71,36 +76,52 @@ Grid.prototype.drop = function(ev) {
     this.endCell = ev.target.id;
     var startCellObject = document.getElementById(this.startCell);
     var endCellObject = document.getElementById(this.endCell);
-    if (startCellObject.innerHTML == "X" && endCellObject.innerHTML == "") {
+    if (startCellObject.innerHTML == "x" && endCellObject.innerHTML == "") {
     	startCellObject.innerHTML = "";
-    	endCellObject.innerHTML = "X";
+    	endCellObject.innerHTML = "x";
+    	this.updateGridStatus();
     }
 };
 
 
-/* Function: start
-* Initializes click handling
-*/
-Grid.prototype.start = function() {
-	var grid = this;
-	console.log("nigga we made it");
-};
-
-/* things that should happen each time a cell is clicked.
-* 	obj : Object representing the cell that was clicked.
-*/
-Grid.prototype.handleClick = function() {
-	console.log("got to handleClick");
-	// toggleX(this);
-};
-
-/* Updates the html of the elements under the "status" class
-* to msg
-*/
 Grid.prototype.refreshGrid = function() {
-	console.log("giving the grid refreshments!");
+	var grid = this;
+	var ajax = new XMLHttpRequest();
+	ajax.open("GET", "refresh_grid.php?size="+this.size, true);
+	ajax.send();
+	ajax.onreadystatechange = function() {
+		if (ajax.readyState == 4 && ajax.status == 200) {
+			console.log("newGridStatus="+ajax.responseText);
+			grid.setGrid(ajax.responseText);
+		}
+	};
 };
 
+
+Grid.prototype.updateGridStatus = function() {
+	this.getGrid();
+	var grid = this;
+	var ajax = new XMLHttpRequest();
+	ajax.open("GET", "refresh_grid.php?gridsize1="+grid.size+"&status="+grid.status, true);
+	ajax.send();
+	ajax.onreadystatechange = function() {
+		if (ajax.readyState == 4 && ajax.status == 200) {
+			console.log("updateStatus="+ajax.responseText);
+		}
+	};
+};
+
+Grid.prototype.changeCount = function(option) {
+	var grid = this;
+	var ajax = new XMLHttpRequest();
+	ajax.open("GET", "refresh_grid.php?gridsize2="+grid.size+"&instance="+option, true);
+	ajax.send();
+	ajax.onreadystatechange = function() {
+		if (ajax.readyState == 4 && ajax.status == 200) {
+			console.log("instanceStatus="+ajax.responseText);
+		}
+	};
+};
 
 
 /* Sets the html of all "td" cells to the empty string ""
@@ -108,4 +129,27 @@ Grid.prototype.refreshGrid = function() {
 */
 Grid.prototype.clearGrid = function() {
 	console.log("grid cleared");
+	for (var i = 0; i < this.cells.length; i++) {
+		this.cells[i].innerHTML = "";
+	}
+};
+
+Grid.prototype.setGrid = function(string) {
+	console.log("input="+string);
+	for (var i = 0; i < this.cells.length; i++) {
+		if (string.substring(i, i + 1) == "1")
+			this.cells[i].innerHTML = "x";
+		else
+			this.cells[i].innerHTML = "";
+	}
+};
+
+Grid.prototype.getGrid = function() {
+	this.status = "";
+	for (var i = 0; i < this.cells.length; i++) {
+		if (this.cells[i].innerHTML == "")
+			this.status += "0";
+		else
+			this.status += "1";
+	}
 };

@@ -27,8 +27,9 @@ table {
 /* defining a single cell */
 td {
 	/* set bg color and brightness of cell */
-	background-color: #428bca;
-	opacity: 0.5;
+	/*background-color: #428bca;*/
+	background-color: #88BAEA;
+	opacity: 0.9;
 
 	/* font color */
 	color:#fff;
@@ -41,7 +42,7 @@ td {
 
 /* change cell when mouse hovers over it */
 td:hover {
-	opacity: 0.6;  /*make cell darker */
+	/*opacity: 0.6;*/  /*make cell darker */
 	cursor: pointer; /* mouse changes to pointer */
 }
 
