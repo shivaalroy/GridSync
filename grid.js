@@ -13,6 +13,7 @@ function getParameterByName(name) {
 var grid1;
 function makeGrid() {
 	var size = getParameterByName('size');
+	if (size == "") return;
 	var dimension = 100 / size;
 	var table = "<table id='grid'>";
 	var table_row = "<tr>";
