@@ -10,6 +10,12 @@ function getParameterByName(name) {
 	results = regex.exec(location.search);
 	return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
 }
+
+function getTime() {
+	var d = new Date();
+	return d.getTime();
+}
+
 var grid1;
 function makeGrid() {
 	var size = getParameterByName('size');
@@ -48,11 +54,14 @@ function Grid(name, size) {
 		cells[i].addEventListener("dragover", function() { grid.allowDrop(event); });
 		cells[i].addEventListener("drop", function() { grid.drop(event); });
 		cells[i].addEventListener("dragstart", function() { grid.drag(event); });
+		this.status += "0";
 	}
 	this.startCell;
 	this.endCell;
+	// this.setLastChange();
 	this.refreshGrid();
-	window.addEventListener("load", function() { grid.changeCount(1); });
+	setInterval(function() { grid.refreshGrid() }, 1000);
+	// window.addEventListener("load", function() { grid.changeCount(1); });
 }
 
 Grid.prototype.toggleX = function(cell) {
@@ -83,16 +92,41 @@ Grid.prototype.drop = function(ev) {
     }
 };
 
-
-Grid.prototype.refreshGrid = function() {
+Grid.prototype.setLastChange = function() {
 	var grid = this;
 	var ajax = new XMLHttpRequest();
-	ajax.open("GET", "refresh_grid.php?size="+this.size, true);
+	ajax.open("GET", "refresh_grid.php?mostrecentchange=lastchange&size="+grid.size, true);
 	ajax.send();
 	ajax.onreadystatechange = function() {
 		if (ajax.readyState == 4 && ajax.status == 200) {
-			console.log("newGridStatus="+ajax.responseText);
-			grid.setGrid(ajax.responseText);
+			if (ajax.responseText != "no_lastchange") {
+				grid.lastchange = ajax.responseText;
+				console.log("previous_lastchange_was="+grid.lastchange);
+			} else {
+				grid.lastchange = getTime();
+			}
+			grid.refreshGrid();
+		}
+	};
+};
+
+// Get the newest grid with status and the most current lastchange
+Grid.prototype.refreshGrid = function() {
+	var grid = this;
+	console.log("lastchange="+grid.lastchange);
+	var ajax = new XMLHttpRequest();
+	ajax.open("GET", "refresh_grid.php?size="+grid.size+"&lastchange="+grid.lastchange, true);
+	ajax.send();
+	ajax.onreadystatechange = function() {
+		if (ajax.readyState == 4 && ajax.status == 200) {
+			if (ajax.responseText != "nochange") {
+				grid.status = ajax.responseText.substring(0, grid.size * grid.size);
+				grid.lastchange = ajax.responseText.substring((grid.size * grid.size) + 1);
+				console.log("new lastchange="+grid.lastchange);
+				console.log("new status="+grid.status);
+				grid.setGrid();
+			}
+			console.log("refreshGrid="+ajax.responseText);
 		}
 	};
 };
@@ -100,9 +134,10 @@ Grid.prototype.refreshGrid = function() {
 
 Grid.prototype.updateGridStatus = function() {
 	this.getGrid();
+	this.lastchange = getTime();
 	var grid = this;
 	var ajax = new XMLHttpRequest();
-	ajax.open("GET", "refresh_grid.php?gridsize1="+grid.size+"&status="+grid.status, true);
+	ajax.open("GET", "refresh_grid.php?status="+grid.status+"&lastchange="+grid.lastchange+"&gridsize="+grid.size, true);
 	ajax.send();
 	ajax.onreadystatechange = function() {
 		if (ajax.readyState == 4 && ajax.status == 200) {
@@ -114,7 +149,7 @@ Grid.prototype.updateGridStatus = function() {
 Grid.prototype.changeCount = function(option) {
 	var grid = this;
 	var ajax = new XMLHttpRequest();
-	ajax.open("GET", "refresh_grid.php?gridsize2="+grid.size+"&instance="+option, true);
+	ajax.open("GET", "refresh_grid.php?instance="+option+"&gridsize="+grid.size, true);
 	ajax.send();
 	ajax.onreadystatechange = function() {
 		if (ajax.readyState == 4 && ajax.status == 200) {
@@ -123,21 +158,15 @@ Grid.prototype.changeCount = function(option) {
 	};
 };
 
-
-/* Sets the html of all "td" cells to the empty string ""
-* and resets roundCount to 0
-*/
 Grid.prototype.clearGrid = function() {
-	console.log("grid cleared");
 	for (var i = 0; i < this.cells.length; i++) {
 		this.cells[i].innerHTML = "";
 	}
 };
 
-Grid.prototype.setGrid = function(string) {
-	console.log("input="+string);
+Grid.prototype.setGrid = function() {
 	for (var i = 0; i < this.cells.length; i++) {
-		if (string.substring(i, i + 1) == "1")
+		if (this.status.substring(i, i + 1) == "1")
 			this.cells[i].innerHTML = "x";
 		else
 			this.cells[i].innerHTML = "";
