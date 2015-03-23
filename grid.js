@@ -4,6 +4,7 @@
 * name: string representing the id of the tic-tac-toe grid
 * 	in our html.
 */
+
 function getParameterByName(name) {
 	name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
 	var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
@@ -54,6 +55,14 @@ function Grid(name, size) {
 		cells[i].addEventListener("dragover", function() { grid.allowDrop(event); });
 		cells[i].addEventListener("drop", function() { grid.drop(event); });
 		cells[i].addEventListener("dragstart", function() { grid.drag(event); });
+		cells[i].addEventListener('touchmove', function(event) {
+			var touch = event.targetTouches[0];
+
+			// Place element where the finger is
+			this.style.left = touch.pageX-25 + 'px';
+			this.style.top = touch.pageY-25 + 'px';
+			event.preventDefault();
+		}, false);
 		this.status += "0";
 	}
 	this.startCell;
@@ -137,10 +146,14 @@ Grid.prototype.updateGridStatus = function() {
 	this.lastchange = getTime();
 	var grid = this;
 	var ajax = new XMLHttpRequest();
+	console.log("starting ajax");
+	var start = getTime();
 	ajax.open("GET", "refresh_grid.php?status="+grid.status+"&lastchange="+grid.lastchange+"&gridsize="+grid.size, true);
 	ajax.send();
 	ajax.onreadystatechange = function() {
 		if (ajax.readyState == 4 && ajax.status == 200) {
+			var end = getTime();
+			console.log("Time="+ (end - start));
 			console.log("updateStatus="+ajax.responseText);
 		}
 	};

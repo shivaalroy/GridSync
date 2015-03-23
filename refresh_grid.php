@@ -1,6 +1,6 @@
 <?php
 include_once("db_conx.php");
-// refreshGrid()
+// setLastChange()
 if (isset($_GET["mostrecentchange"]) && isset($_GET["size"])) {
     $size = $_GET["size"];
     $query = "SELECT lastchange FROM grid_status WHERE size='$size' LIMIT 1;";
